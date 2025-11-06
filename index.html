@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Runner Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .main-canvas-container {
+            position: relative;
+        }
+
+        #gameCanvas {
+            border: 4px solid #667eea;
+            border-radius: 10px;
+            background: #1a1a1a;
+            display: block;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 250px;
+        }
+
+        .stats-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .stat-item {
+            margin: 10px 0;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.1s linear, background 0.3s;
+            border-radius: 15px;
+        }
+
+        .timer-fill.warning {
+            background: linear-gradient(90deg, #f6ad55, #ed8936);
+        }
+
+        .timer-fill.critical {
+            background: linear-gradient(90deg, #fc8181, #f56565);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .minimap-container {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+        }
+
+        .minimap-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        #miniMap {
+            border: 2px solid #444;
+            border-radius: 5px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .controls {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+
+        .controls h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .controls p {
+            margin: 5px 0;
+            color: #333;
+        }
+
+        .powerups-panel {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .powerup-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .powerup-active {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .victory-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 40px;
+            border-radius: 20px;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .victory-message.show {
+            display: block;
+            animation: bounceIn 0.6s;
+        }
+
+        .game-over-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+            padding: 40px;
+            border-radius: 20px;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-over-message.show {
+            display: block;
+            animation: bounceIn 0.6s;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 18px;
+            background: white;
+            color: #f56565;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .chunk-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+            max-width: 200px;
+            text-align: center;
+        }
+
+        .marker-info {
+            background: rgba(255, 193, 7, 0.9);
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            position: absolute;
+            top: 50px;
+            right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🏃 Maze Runner Challenge 🎯</h1>
+        
+        <div class="game-content">
+            <div class="main-canvas-container">
+                <canvas id="gameCanvas" width="600" height="600"></canvas>
+                <div class="chunk-indicator" id="chunkIndicator">Chunk: 1</div>
+                <div class="marker-info">📍 Markers: <span id="markerCount">0</span></div>
+            </div>
+
+            <div class="side-panel">
+                <div class="stats-panel">
+                    <h2 style="text-align: center; margin-bottom: 15px;">⏱️ Time Remaining</h2>
+                    <div class="timer-bar">
+                        <div class="timer-fill" id="timerFill" style="width: 100%"></div>
+                        <div class="timer-text" id="timerText">60s</div>
+                    </div>
+                    <div class="stat-item">
+                        <span>Steps:</span>
+                        <span class="stat-value" id="stepCounter">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Level:</span>
+                        <span class="stat-value" id="chunkCounter">1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Difficulty:</span>
+                        <span class="stat-value" id="difficultyDisplay" style="font-size: 16px;">🟢 Beginner</span>
+                    </div>
+                </div>
+
+                <div class="powerups-panel">
+                    <h3 style="text-align: center; margin-bottom: 10px;">⚡ Active Power-Ups</h3>
+                    <div class="powerup-item">
+                        <span>🔭 Vision:</span>
+                        <span id="visionLevel" class="powerup-active">Normal</span>
+                    </div>
+                    <div class="powerup-item">
+                        <span>⏰ Time Bonus:</span>
+                        <span id="timeBonus">+0s</span>
+                    </div>
+                    <div class="powerup-item">
+                        <span>👁️ Reveal:</span>
+                        <span id="revealPower">Inactive</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <h3>🎮 Controls</h3>
+                    <p><strong>W/A/S/D</strong> - Move</p>
+                    <p><strong>SHIFT</strong> - Place Marker</p>
+                    <p style="margin-top: 10px; font-style: italic; color: #e53e3e;">⚠️ Beat the timer!</p>
+                    <p style="font-style: italic;">Collect power-ups! ⚡</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="victory-message" id="victoryMessage">
+        🎉 Level Complete! 🎉<br>
+        <span style="font-size: 18px; margin-top: 10px; display: block;">Next level loading...</span>
+    </div>
+
+    <div class="game-over-message" id="gameOverMessage">
+        ⏰ Time's Up! ⏰<br>
+        <span style="font-size: 18px; margin-top: 10px; display: block;">You completed <span id="finalChunks">0</span> levels!</span>
+        <button class="restart-btn" onclick="location.reload()">Try Again</button>
+    </div>
+
+    <script>
+        // ==================== GAME CONFIGURATION ====================
+        const CONFIG = {
+            CHUNK_SIZE: 21,
+            TILE_SIZE: 28,
+            BASE_VISIBILITY_RADIUS: 6,
+            BASE_MARKER_VISIBILITY_RADIUS: 5,
+            CANVAS_WIDTH: 600,
+            CANVAS_HEIGHT: 600,
+            // Progressive difficulty time limits
+            BEGINNER_TIME: 90,      // Levels 1-20: 90 seconds
+            AVERAGE_TIME: 60,       // Levels 21-30: 60 seconds
+            EXPERT_TIME: 45,        // Levels 31-40: 45 seconds
+            PRO_TIME: 30,           // Levels 41-50: 30 seconds
+            INSANE_TIME: 20,        // Levels 51+: 20 seconds
+            COMPLETION_BONUS: 0
+        };
+
+        // Power-up types
+        const POWERUP_TYPES = {
+            VISION: { emoji: '🔭', color: '#4299e1', duration: 15000 }, // +3 vision radius for 15s
+            TIME: { emoji: '⏰', color: '#48bb78', duration: 0 }, // +15 seconds
+            REVEAL: { emoji: '👁️', color: '#ed8936', duration: 8000 } // Reveal entire map for 8s
+        };
+
+        // ==================== DIFFICULTY SYSTEM ====================
+        /**
+         * Gets the time limit based on current chunk level
+         * Progressive difficulty scaling for different skill levels
+         */
+        function getTimeLimitForLevel(level) {
+            if (level <= 20) {
+                return CONFIG.BEGINNER_TIME; // 90 seconds - Beginner
+            } else if (level <= 30) {
+                return CONFIG.AVERAGE_TIME; // 60 seconds - Average
+            } else if (level <= 40) {
+                return CONFIG.EXPERT_TIME; // 45 seconds - Expert
+            } else if (level <= 50) {
+                return CONFIG.PRO_TIME; // 30 seconds - Pro
+            } else {
+                return CONFIG.INSANE_TIME; // 20 seconds - Insane
+            }
+        }
+
+        /**
+         * Gets the difficulty name for display
+         */
+        function getDifficultyName(level) {
+            if (level <= 20) return "🟢 Beginner";
+            else if (level <= 30) return "🟡 Average";
+            else if (level <= 40) return "🟠 Expert";
+            else if (level <= 50) return "🔴 Pro";
+            else return "💀 INSANE";
+        }
+
+        // ==================== GAME STATE ====================
+        const gameState = {
+            maze: [],
+            player: { x: 0, y: 0 },
+            goal: { x: 0, y: 0 },
+            visited: [],
+            markers: [],
+            powerups: [], // Array of powerup positions
+            activePowerups: {
+                vision: { active: false, endTime: 0 },
+                reveal: { active: false, endTime: 0 }
+            },
+            steps: 0,
+            currentChunk: 1,
+            chunkOffsetX: 0,
+            chunkOffsetY: 0,
+            isMoving: false,
+            animationProgress: 0,
+            previousPosition: { x: 0, y: 0 },
+            timeRemaining: 90, // Start with beginner time
+            maxTimeForLevel: 90, // Track max time for percentage calculation
+            lastFrameTime: Date.now(),
+            gameOver: false,
+            visibilityRadius: CONFIG.BASE_VISIBILITY_RADIUS
+        };
+
+        // ==================== CANVAS SETUP ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ==================== BACKGROUND MUSIC ====================
+        /**
+         * Background music system using Web Audio API
+         * To add your own music:
+         * 1. Host your music file (MP3, OGG, WAV) on a CDN or server
+         * 2. Replace the createBackgroundMusic() function with:
+         * 
+         *    const bgMusic = new Audio('YOUR_MUSIC_URL_HERE.mp3');
+         *    bgMusic.loop = true;
+         *    bgMusic.volume = 0.3;
+         *    bgMusic.play();
+         * 
+         * For now, we'll create a simple procedural soundtrack
+         */
+        let audioContext = null;
+        let musicGainNode = null;
+        let isPlayingMusic = false;
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                musicGainNode = audioContext.createGain();
+                musicGainNode.gain.value = 0.15; // Background music volume
+                musicGainNode.connect(audioContext.destination);
+            }
+        }
+
+        function createBackgroundMusic() {
+            if (!audioContext || isPlayingMusic) return;
+            isPlayingMusic = true;
+
+            // Create a simple ambient music loop
+            const notes = [261.63, 293.66, 329.63, 392.00]; // C, D, E, G (pentatonic)
+            let noteIndex = 0;
+
+            function playNote() {
+                if (!isPlayingMusic) return;
+
+                const oscillator = audioContext.createOscillator();
+                const noteGain = audioContext.createGain();
+                
+                oscillator.connect(noteGain);
+                noteGain.connect(musicGainNode);
+                
+                oscillator.frequency.value = notes[noteIndex];
+                oscillator.type = 'sine';
+                
+                noteGain.gain.setValueAtTime(0, audioContext.currentTime);
+                noteGain.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 0.1);
+                noteGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.8);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.8);
+                
+                noteIndex = (noteIndex + 1) % notes.length;
+                
+                setTimeout(playNote, 500);
+            }
+
+            playNote();
+        }
+
+        // Start music on first user interaction
+        let musicStarted = false;
+        function startMusicOnInteraction() {
+            if (!musicStarted) {
+                musicStarted = true;
+                initAudio();
+                createBackgroundMusic();
+                document.removeEventListener('keydown', startMusicOnInteraction);
+            }
+        }
+
+        // ==================== MAZE GENERATION ====================
+        function generateMazeChunk() {
+            const size = CONFIG.CHUNK_SIZE;
+            const maze = Array(size).fill(null).map(() => Array(size).fill(1));
+            
+            function carve(x, y) {
+                maze[y][x] = 0;
+                
+                const directions = [
+                    [0, -2], [0, 2], [2, 0], [-2, 0]
+                ].sort(() => Math.random() - 0.5);
+                
+                for (const [dx, dy] of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && maze[ny][nx] === 1) {
+                        maze[y + dy / 2][x + dx / 2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+            
+            carve(1, 1);
+            maze[1][1] = 0;
+            maze[size - 2][size - 2] = 0;
+            
+            return maze;
+        }
+
+        /**
+         * Spawns power-ups randomly in the maze
+         */
+        function spawnPowerups() {
+            gameState.powerups = [];
+            const numPowerups = 2 + Math.floor(gameState.currentChunk / 3); // More power-ups as game progresses
+            
+            for (let i = 0; i < numPowerups; i++) {
+                let x, y;
+                let attempts = 0;
+                
+                // Find valid spawn location
+                do {
+                    x = Math.floor(Math.random() * (CONFIG.CHUNK_SIZE - 2)) + 1;
+                    y = Math.floor(Math.random() * (CONFIG.CHUNK_SIZE - 2)) + 1;
+                    attempts++;
+                } while ((gameState.maze[y][x] === 1 || 
+                         (x === gameState.player.x && y === gameState.player.y) ||
+                         (x === gameState.goal.x && y === gameState.goal.y)) && 
+                         attempts < 100);
+                
+                if (attempts < 100) {
+                    // Random power-up type
+                    const types = Object.keys(POWERUP_TYPES);
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    
+                    gameState.powerups.push({ x, y, type, collected: false });
+                }
+            }
+        }
+
+        function initializeChunk() {
+            gameState.maze = generateMazeChunk();
+            gameState.player = { x: 1, y: 1 };
+            gameState.goal = { x: CONFIG.CHUNK_SIZE - 2, y: CONFIG.CHUNK_SIZE - 2 };
+            gameState.previousPosition = { ...gameState.player };
+            
+            gameState.visited = Array(CONFIG.CHUNK_SIZE).fill(null)
+                .map(() => Array(CONFIG.CHUNK_SIZE).fill(false));
+            
+            gameState.visited[gameState.player.y][gameState.player.x] = true;
+            
+            // Set time limit based on current level
+            gameState.timeRemaining = getTimeLimitForLevel(gameState.currentChunk);
+            gameState.maxTimeForLevel = gameState.timeRemaining;
+            
+            // Spawn power-ups
+            spawnPowerups();
+        }
+
+        // ==================== POWER-UP SYSTEM ====================
+        /**
+         * Collects a power-up and applies its effect
+         */
+        function collectPowerup(powerup) {
+            if (powerup.collected) return;
+            
+            powerup.collected = true;
+            const type = powerup.type;
+            
+            switch(type) {
+                case 'VISION':
+                    gameState.activePowerups.vision = {
+                        active: true,
+                        endTime: Date.now() + POWERUP_TYPES.VISION.duration
+                    };
+                    gameState.visibilityRadius = CONFIG.BASE_VISIBILITY_RADIUS + 3;
+                    updatePowerupDisplay();
+                    break;
+                    
+                case 'TIME':
+                    gameState.timeRemaining += 15;
+                    document.getElementById('timeBonus').textContent = '+15s';
+                    setTimeout(() => {
+                        document.getElementById('timeBonus').textContent = '+0s';
+                    }, 2000);
+                    break;
+                    
+                case 'REVEAL':
+                    gameState.activePowerups.reveal = {
+                        active: true,
+                        endTime: Date.now() + POWERUP_TYPES.REVEAL.duration
+                    };
+                    updatePowerupDisplay();
+                    break;
+            }
+            
+            playPowerupSound();
+        }
+
+        /**
+         * Updates power-up status displays
+         */
+        function updatePowerupDisplay() {
+            const now = Date.now();
+            
+            // Vision power-up
+            if (gameState.activePowerups.vision.active) {
+                if (now < gameState.activePowerups.vision.endTime) {
+                    const remaining = Math.ceil((gameState.activePowerups.vision.endTime - now) / 1000);
+                    document.getElementById('visionLevel').textContent = `Enhanced (${remaining}s)`;
+                    document.getElementById('visionLevel').className = 'powerup-active';
+                } else {
+                    gameState.activePowerups.vision.active = false;
+                    gameState.visibilityRadius = CONFIG.BASE_VISIBILITY_RADIUS;
+                    document.getElementById('visionLevel').textContent = 'Normal';
+                    document.getElementById('visionLevel').className = '';
+                }
+            } else {
+                document.getElementById('visionLevel').textContent = 'Normal';
+                document.getElementById('visionLevel').className = '';
+            }
+            
+            // Reveal power-up
+            if (gameState.activePowerups.reveal.active) {
+                if (now < gameState.activePowerups.reveal.endTime) {
+                    const remaining = Math.ceil((gameState.activePowerups.reveal.endTime - now) / 1000);
+                    document.getElementById('revealPower').textContent = `Active (${remaining}s)`;
+                    document.getElementById('revealPower').className = 'powerup-active';
+                } else {
+                    gameState.activePowerups.reveal.active = false;
+                    document.getElementById('revealPower').textContent = 'Inactive';
+                    document.getElementById('revealPower').className = '';
+                }
+            } else {
+                document.getElementById('revealPower').textContent = 'Inactive';
+                document.getElementById('revealPower').className = '';
+            }
+        }
+
+        /**
+         * Checks if player is on a power-up
+         */
+        function checkPowerupCollection() {
+            for (const powerup of gameState.powerups) {
+                if (!powerup.collected && 
+                    powerup.x === gameState.player.x && 
+                    powerup.y === gameState.player.y) {
+                    collectPowerup(powerup);
+                }
+            }
+        }
+
+        // ==================== LINE OF SIGHT ====================
+        function hasLineOfSight(x0, y0, x1, y1) {
+            const dx = Math.abs(x1 - x0);
+            const dy = Math.abs(y1 - y0);
+            const sx = x0 < x1 ? 1 : -1;
+            const sy = y0 < y1 ? 1 : -1;
+            let err = dx - dy;
+
+            let x = x0;
+            let y = y0;
+
+            while (true) {
+                if (x >= 0 && x < CONFIG.CHUNK_SIZE && y >= 0 && y < CONFIG.CHUNK_SIZE) {
+                    if (gameState.maze[y][x] === 1) {
+                        return false;
+                    }
+                }
+
+                if (x === x1 && y === y1) break;
+
+                const e2 = 2 * err;
+                if (e2 > -dy) {
+                    err -= dy;
+                    x += sx;
+                }
+                if (e2 < dx) {
+                    err += dx;
+                    y += sy;
+                }
+            }
+
+            return true;
+        }
+
+        function isVisible(x, y) {
+            // Reveal power-up shows everything
+            if (gameState.activePowerups.reveal.active) return true;
+            
+            const px = gameState.player.x;
+            const py = gameState.player.y;
+            const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+            
+            if (distance > gameState.visibilityRadius) return false;
+            
+            return hasLineOfSight(px, py, x, y);
+        }
+
+        function isVisibleFromMarker(x, y) {
+            if (gameState.activePowerups.reveal.active) return true;
+            
+            for (const marker of gameState.markers) {
+                if (marker.chunkId !== gameState.currentChunk) continue;
+                
+                const distance = Math.sqrt((x - marker.x) ** 2 + (y - marker.y) ** 2);
+                if (distance <= CONFIG.BASE_MARKER_VISIBILITY_RADIUS) {
+                    if (hasLineOfSight(marker.x, marker.y, x, y)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Checks if a tile is adjacent to visible area (for wall rendering)
+         */
+        function isAdjacentToVisible(x, y) {
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx >= 0 && nx < CONFIG.CHUNK_SIZE && 
+                        ny >= 0 && ny < CONFIG.CHUNK_SIZE) {
+                        if (isVisible(nx, ny) || isVisibleFromMarker(nx, ny)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // ==================== MARKER SYSTEM ====================
+        function placeMarker() {
+            const px = gameState.player.x;
+            const py = gameState.player.y;
+            
+            const exists = gameState.markers.some(m => 
+                m.x === px && m.y === py && m.chunkId === gameState.currentChunk
+            );
+            
+            if (!exists) {
+                gameState.markers.push({
+                    x: px,
+                    y: py,
+                    chunkId: gameState.currentChunk
+                });
+                
+                playMarkerSound();
+                updateMarkerCount();
+            }
+        }
+
+        function updateMarkerCount() {
+            const count = gameState.markers.filter(m => 
+                m.chunkId === gameState.currentChunk
+            ).length;
+            document.getElementById('markerCount').textContent = count;
+        }
+
+        // ==================== MOVEMENT & INPUT ====================
+        function handleMovement(e) {
+            if (gameState.gameOver) return;
+            
+            const key = e.key.toLowerCase();
+            
+            if (e.key === 'Shift') {
+                placeMarker();
+                return;
+            }
+            
+            if (gameState.isMoving) return;
+            
+            let newX = gameState.player.x;
+            let newY = gameState.player.y;
+            
+            switch(key) {
+                case 'w': newY--; break;
+                case 's': newY++; break;
+                case 'a': newX--; break;
+                case 'd': newX++; break;
+                default: return;
+            }
+            
+            if (newX >= 0 && newX < CONFIG.CHUNK_SIZE && 
+                newY >= 0 && newY < CONFIG.CHUNK_SIZE && 
+                gameState.maze[newY][newX] === 0) {
+                
+                gameState.previousPosition = { ...gameState.player };
+                gameState.player.x = newX;
+                gameState.player.y = newY;
+                gameState.steps++;
+                gameState.isMoving = true;
+                gameState.animationProgress = 0;
+                
+                gameState.visited[newY][newX] = true;
+                
+                checkPowerupCollection();
+                updateStats();
+                checkForGoal();
+            }
+        }
+
+        // ==================== TIMER SYSTEM ====================
+        /**
+         * Updates the countdown timer
+         */
+        function updateTimer(deltaTime) {
+            if (gameState.gameOver) return;
+            
+            gameState.timeRemaining -= deltaTime / 1000;
+            
+            if (gameState.timeRemaining <= 0) {
+                gameState.timeRemaining = 0;
+                gameOver();
+                return;
+            }
+            
+            // Update timer display
+            const seconds = Math.ceil(gameState.timeRemaining);
+            document.getElementById('timerText').textContent = `${seconds}s`;
+            
+            // Calculate percentage based on max time for current level
+            const percentage = (gameState.timeRemaining / gameState.maxTimeForLevel) * 100;
+            const timerFill = document.getElementById('timerFill');
+            timerFill.style.width = `${percentage}%`;
+            
+            // Change color based on time remaining
+            timerFill.className = 'timer-fill';
+            if (percentage < 20) {
+                timerFill.classList.add('critical');
+            } else if (percentage < 40) {
+                timerFill.classList.add('warning');
+            }
+        }
+
+        /**
+         * Handles game over
+         */
+        function gameOver() {
+            gameState.gameOver = true;
+            document.getElementById('finalChunks').textContent = gameState.currentChunk - 1;
+            document.getElementById('gameOverMessage').classList.add('show');
+            playGameOverSound();
+        }
+
+        // ==================== GOAL & CHUNK PROGRESSION ====================
+        function checkForGoal() {
+            if (gameState.player.x === gameState.goal.x && 
+                gameState.player.y === gameState.goal.y) {
+                
+                const victoryMsg = document.getElementById('victoryMessage');
+                victoryMsg.classList.add('show');
+                
+                playVictorySound();
+                
+                gameState.chunkOffsetX += CONFIG.CHUNK_SIZE;
+                
+                setTimeout(() => {
+                    victoryMsg.classList.remove('show');
+                    gameState.currentChunk++;
+                    initializeChunk(); // This will set the new time limit
+                    updateStats();
+                    updateMarkerCount();
+                }, 1500);
+            }
+        }
+
+        // ==================== RENDERING ====================
+        function drawMaze() {
+            const size = CONFIG.CHUNK_SIZE;
+            const tileSize = CONFIG.TILE_SIZE;
+            
+            const offsetX = (CONFIG.CANVAS_WIDTH - size * tileSize) / 2;
+            const offsetY = (CONFIG.CANVAS_HEIGHT - size * tileSize) / 2;
+            
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+            
+            // Draw maze tiles
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const screenX = offsetX + x * tileSize;
+                    const screenY = offsetY + y * tileSize;
+                    
+                    const visibleFromPlayer = isVisible(x, y);
+                    const visibleFromMarker = isVisibleFromMarker(x, y);
+                    const isWall = gameState.maze[y][x] === 1;
+                    
+                    if (visibleFromPlayer || visibleFromMarker) {
+                        // Fully visible
+                        if (isWall) {
+                            ctx.fillStyle = '#4a5568';
+                            ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                            ctx.strokeStyle = '#2d3748';
+                            ctx.strokeRect(screenX, screenY, tileSize, tileSize);
+                        } else {
+                            ctx.fillStyle = '#2d3748';
+                            ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                        }
+                        
+                        // Draw goal
+                        if (x === gameState.goal.x && y === gameState.goal.y) {
+                            ctx.fillStyle = '#48bb78';
+                            ctx.beginPath();
+                            ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, 
+                                   tileSize / 3, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            ctx.strokeStyle = '#22543d';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, 
+                                   tileSize / 4, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                    } else if (isWall && isAdjacentToVisible(x, y)) {
+                        // Draw walls adjacent to visible areas (dimmed)
+                        ctx.fillStyle = '#1a202c';
+                        ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                        ctx.strokeStyle = '#0f1419';
+                        ctx.strokeRect(screenX, screenY, tileSize, tileSize);
+                    } else {
+                        // Complete fog of war
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                    }
+                }
+            }
+            
+            // Draw power-ups
+            for (const powerup of gameState.powerups) {
+                if (!powerup.collected && (isVisible(powerup.x, powerup.y) || isVisibleFromMarker(powerup.x, powerup.y))) {
+                    const screenX = offsetX + powerup.x * tileSize + tileSize / 2;
+                    const screenY = offsetY + powerup.y * tileSize + tileSize / 2;
+                    
+                    // Draw power-up glow
+                    const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, tileSize / 2);
+                    gradient.addColorStop(0, POWERUP_TYPES[powerup.type].color);
+                    gradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(screenX - tileSize / 2, screenY - tileSize / 2, tileSize, tileSize);
+                    
+                    // Draw power-up icon
+                    ctx.fillStyle = POWERUP_TYPES[powerup.type].color;
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, tileSize / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw emoji
+                    ctx.font = `${tileSize / 2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(POWERUP_TYPES[powerup.type].emoji, screenX, screenY);
+                }
+            }
+            
+            // Draw markers
+            for (const marker of gameState.markers) {
+                if (marker.chunkId === gameState.currentChunk) {
+                    const markerVisible = isVisible(marker.x, marker.y) || isVisibleFromMarker(marker.x, marker.y);
+                    if (markerVisible) {
+                        const screenX = offsetX + marker.x * tileSize + tileSize / 2;
+                        const screenY = offsetY + marker.y * tileSize + tileSize / 2;
+                        
+                        ctx.fillStyle = '#ffc107';
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, tileSize / 4, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#ff6b6b';
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, tileSize / 6, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.strokeStyle = 'rgba(255, 193, 7, 0.2)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, CONFIG.BASE_MARKER_VISIBILITY_RADIUS * tileSize, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            drawPlayer(offsetX, offsetY, tileSize);
+        }
+
+        function drawPlayer(offsetX, offsetY, tileSize) {
+            let drawX = gameState.player.x;
+            let drawY = gameState.player.y;
+            
+            if (gameState.isMoving && gameState.animationProgress < 1) {
+                const t = gameState.animationProgress;
+                drawX = gameState.previousPosition.x + (gameState.player.x - gameState.previousPosition.x) * t;
+                drawY = gameState.previousPosition.y + (gameState.player.y - gameState.previousPosition.y) * t;
+            }
+            
+            const screenX = offsetX + drawX * tileSize + tileSize / 2;
+            const screenY = offsetY + drawY * tileSize + tileSize / 2;
+            
+            ctx.fillStyle = '#667eea';
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, tileSize / 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            const dirX = gameState.player.x - gameState.previousPosition.x;
+            const dirY = gameState.player.y - gameState.previousPosition.y;
+            if (dirX !== 0 || dirY !== 0) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(screenX + dirX * 5, screenY + dirY * 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // ==================== UI UPDATES ====================
+        function updateStats() {
+            document.getElementById('stepCounter').textContent = gameState.steps;
+            document.getElementById('chunkCounter').textContent = gameState.currentChunk;
+            
+            // Update chunk indicator with difficulty
+            const difficulty = getDifficultyName(gameState.currentChunk);
+            document.getElementById('chunkIndicator').textContent = `Level ${gameState.currentChunk} - ${difficulty}`;
+            document.getElementById('difficultyDisplay').textContent = difficulty;
+        }
+
+        // ==================== AUDIO ====================
+        function playVictorySound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 523.25;
+                gainNode.gain.value = 0.3;
+                
+                oscillator.start();
+                
+                setTimeout(() => { oscillator.frequency.value = 659.25; }, 100);
+                setTimeout(() => { oscillator.frequency.value = 783.99; }, 200);
+                setTimeout(() => { oscillator.stop(); }, 400);
+            } catch (e) {
+                console.log('Audio not available');
+            }
+        }
+
+        function playMarkerSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 880;
+                gainNode.gain.value = 0.2;
+                
+                oscillator.start();
+                setTimeout(() => { oscillator.stop(); }, 100);
+            } catch (e) {
+                console.log('Audio not available');
+            }
+        }
+
+        function playPowerupSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 1046.50;
+                gainNode.gain.value = 0.25;
+                
+                oscillator.start();
+                setTimeout(() => { oscillator.frequency.value = 1318.51; }, 80);
+                setTimeout(() => { oscillator.frequency.value = 1568; }, 160);
+                setTimeout(() => { oscillator.stop(); }, 300);
+            } catch (e) {
+                console.log('Audio not available');
+            }
+        }
+
+        function playGameOverSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 392;
+                gainNode.gain.value = 0.3;
+                
+                oscillator.start();
+                setTimeout(() => { oscillator.frequency.value = 349.23; }, 150);
+                setTimeout(() => { oscillator.frequency.value = 293.66; }, 300);
+                setTimeout(() => { oscillator.frequency.value = 261.63; }, 450);
+                setTimeout(() => { oscillator.stop(); }, 700);
+            } catch (e) {
+                console.log('Audio not available');
+            }
+        }
+
+        // ==================== GAME LOOP ====================
+        function gameLoop() {
+            const now = Date.now();
+            const deltaTime = now - gameState.lastFrameTime;
+            gameState.lastFrameTime = now;
+            
+            if (gameState.isMoving) {
+                gameState.animationProgress += 0.15;
+                if (gameState.animationProgress >= 1) {
+                    gameState.isMoving = false;
+                    gameState.animationProgress = 1;
+                }
+            }
+            
+            updateTimer(deltaTime);
+            updatePowerupDisplay();
+            
+            drawMaze();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            initializeChunk();
+            updateStats();
+            updateMarkerCount();
+            gameState.lastFrameTime = Date.now();
+            
+            gameLoop();
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.addEventListener('keydown', handleMovement);
+        document.addEventListener('keydown', startMusicOnInteraction);
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
